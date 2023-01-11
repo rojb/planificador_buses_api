@@ -40,9 +40,11 @@ module.exports.index = async (req, res) => {
     const paradaDestino = await getParadasDistancia(latdest, longdest);
     if (paradaInicio[0]['distance'] >= 1) {
         res.status(400).json({ msg: "Se encuentra demasiado lejos de la parada más cercana" });
+        return;
     }
     if (paradaDestino[0]['distance'] >= 1) {
         res.status(400).json({ msg: "No se encontró una parada cerca del lugar indicado" });
+        return;
     }
     const grafo = await generarGrafo();
     const inicio = `${paradaInicio[0]['id']}`;
