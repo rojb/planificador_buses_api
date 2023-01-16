@@ -49,7 +49,7 @@ module.exports.index = async (req, res) => {
     const grafo = await generarGrafo();
     const inicio = `${paradaInicio[0]['id']}`;
     const destino = `${paradaDestino[0]['id']}`;
-    const response = await ksp(grafo, inicio, destino, 3);
+    const response = await ksp(grafo, inicio, destino, 2);
     res.json(response);
 }
 
