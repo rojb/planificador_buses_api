@@ -1,6 +1,8 @@
-const { getAdjacencyList, getParadasDistancia } = require("../db/db")
+const { getAdjacencyList, getParadasDistancia, getParadas, getParadasLineas } = require("../db/db")
 const miGrafo = require('graphlib');
 const { ksp } = require("../utils/ksp");
+
+
 
 
 const generarGrafo = async () => {

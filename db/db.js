@@ -66,5 +66,20 @@ const getParadasDistancia = async (lat, long) => {
 
     return result
 }
+const getParadasLineas = async () => {
+    const db = await openDb();
+    const sql = ` 
+    SELECT parada.id , parada.paradaid, parada.longitud, parada.latitud, lineacod,tipo  from  recorridoParada 
+    LEFT JOIN recorrido on recorrido.recorridoID = recorridoParada.recorridoID
+    LEFT JOIN parada on parada.paradaID = recorridoParada.parada_ini
+    where recorridoParada.parada_ini in (select paradaID from parada)
+    order by paradaid`;
 
-module.exports = { getAdjacencyList, getProfundidad, getParadas, getParadasDistancia }
+    const result = await db.all(sql);
+    db.close();
+
+    return result
+}
+
+
+module.exports = { getAdjacencyList, getProfundidad, getParadas, getParadasDistancia, getParadasLineas }
