@@ -2,17 +2,29 @@ const { openDb } = require('../index');
 
 const getAdjacencyList = async () => {
     const db = await openDb();
-    const sql = `
-        SELECT recorridoParada.recorridoID, i.id as p_ini_id, i.longitud as longitud_ini,
-               i.latitud as latitud_ini, i.paradaid as parada_ini, s.id as p_sig_id,
-               s.paradaid as parada_sig, s.longitud as longitud_sig, s.latitud as latitud_sig,
-               tiempo, disxpunto  
+    const sql = `  
+        SELECT 
+            recorridoParada.recorridoID, 
+            recorrido.tipo,  -- IMPORTANTE: Obtener tipo (Ida/Vuelta)
+            i.id as p_ini_id,  
+            i.longitud as longitud_ini, 
+            i.latitud as latitud_ini,  
+            i.paradaid as parada_ini, 
+            s.id as p_sig_id, 
+            s.paradaid as parada_sig, 
+            s.longitud as longitud_sig,
+            s.latitud as latitud_sig, 
+            recorridoParada.tiempo, 
+            recorridoParada.disxpunto,
+            recorrido.lineaCod  -- Obtener código de línea
         FROM recorridoParada
+        LEFT JOIN recorrido ON recorrido.recorridoID = recorridoParada.recorridoID
         LEFT JOIN parada i ON i.paradaID = recorridoParada.parada_ini
         LEFT JOIN parada s ON s.paradaID = recorridoParada.parada_sig
         WHERE parada_ini IS NOT NULL AND parada_sig IS NOT NULL
-        ORDER BY parada_ini ASC
+        ORDER BY recorrido.lineaCod ASC, recorrido.tipo ASC, parada_ini ASC
     `;
+
     const result = await db.all(sql);
     db.close();
     return result;

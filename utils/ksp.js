@@ -121,15 +121,21 @@ exports.ksp = async function (g, source, target, K, weightFunc, edgeFunc) {
 // Algoritmo de Dijkstra para encontrar el camino más corto
 function getDijkstra(g, source, target, weightFunc, edgeFunc) {
     if (!weightFunc) {
-        weightFunc = (e) => g.edge(e);
+        weightFunc = (e) => getWeightValue(g.edge(e));
     }
 
     let dijkstra = algoDijkstra.alg.dijkstra(g, source, weightFunc, edgeFunc);
     return extractPathFromDijkstra(g, dijkstra, source, target, weightFunc, edgeFunc);
 }
 
+function getWeightValue(edgeWeight) {
+    if (typeof edgeWeight === 'object' && edgeWeight !== null) {
+        return edgeWeight.tiempo || edgeWeight.distancia || 1;
+    }
+    return edgeWeight || 1;
+}
+
 function extractPathFromDijkstra(g, dijkstra, source, target, weightFunc, edgeFunc) {
-    // check if there is a valid path
     if (dijkstra[target].distance === Number.POSITIVE_INFINITY) {
         return null;
     }
@@ -139,14 +145,15 @@ function extractPathFromDijkstra(g, dijkstra, source, target, weightFunc, edgeFu
     while (currentNode !== source) {
         let previousNode = dijkstra[currentNode].predecessor;
 
-        // extract weight from edge, using weightFunc if supplied, or the default way
         let weightValue;
         if (weightFunc) {
             weightValue = weightFunc({ v: previousNode, w: currentNode });
         } else {
-            weightValue = g.edge(previousNode, currentNode)
+            const edgeObj = g.edge(previousNode, currentNode);
+            weightValue = getWeightValue(edgeObj);
         }
-        let edge = getNewEdge(previousNode, currentNode, weightValue);
+
+        let edge = getNewEdge(previousNode, currentNode, weightValue, g);
         edges.push(edge);
         currentNode = previousNode;
     }
@@ -158,6 +165,7 @@ function extractPathFromDijkstra(g, dijkstra, source, target, weightFunc, edgeFu
     return result;
 }
 
+
 function addEdges(g, edges) {
     edges.forEach(e => {
         g.setEdge(e.fromNode, e.toNode, e.edgeObj);
@@ -167,26 +175,25 @@ function addEdges(g, edges) {
 // entrada: un grafo y un nodo para eliminar
 // valor devuelto: array de bordes eliminados
 function removeNode(g, rn, weightFunc) {
-
     let remEdges = [];
     let edges = cloneObject(g.edges());
-    // save all the edges we are going to remove
+
     edges.forEach(edge => {
         if (edge.v == rn || edge.w == rn) {
-
-            // extract weight
             let weightValue;
             if (weightFunc) {
                 weightValue = weightFunc(edge);
             } else {
-                weightValue = g.edge(edge);
+                const edgeObj = g.edge(edge);
+                weightValue = getWeightValue(edgeObj);
             }
 
-            let e = getNewEdge(edge.v, edge.w, weightValue);
+            let e = getNewEdge(edge.v, edge.w, weightValue, g);
             remEdges.push(e);
         }
     })
-    g.removeNode(rn); // removing the node from the graph
+
+    g.removeNode(rn);
     return remEdges;
 }
 
@@ -243,15 +250,22 @@ function isPathEqual(path1, path2) {
 }
 
 // construye un nuevo nodo
-function getNewEdge(fromNode, toNode, weight) {
+function getNewEdge(fromNode, toNode, weight, g) {
+    const edgeObj = g.edge(fromNode, toNode);
+
     const paradaIni = paradas.find((parada) => parada.id == fromNode);
     const paradaSig = paradas.find((parada) => parada.id == toNode);
+
     return {
         fromNode: fromNode,
         paradaIni,
         toNode: toNode,
         paradaSig,
-        weight: weight,
+        weight: getWeightValue(weight),
+        // Información adicional
+        lineaCod: edgeObj?.lineaCod,
+        tipo: edgeObj?.tipo,  // Ida o Vuelta
+        recorridoID: edgeObj?.recorridoID
     }
 }
 
