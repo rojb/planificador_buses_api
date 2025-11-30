@@ -1,11 +1,11 @@
 const { getAdjacencyList, getParadasDistancia, getParadas, getParadasLineas } = require("../db/db")
 const miGrafo = require('graphlib');
 const { ksp } = require("../utils/ksp");
+const { getOrBuildGraph } = require('../utils/graphCache');
 
 
 
-
-const generarGrafo = async () => {
+module.exports.generarGrafo = async () => {
 
     let g = new miGrafo.Graph();
     const adjacencyList = await getAdjacencyList();
@@ -36,22 +36,37 @@ const generarGrafo = async () => {
 
 
 module.exports.index = async (req, res) => {
+    try {
 
-    const { latini, longini, latdest, longdest } = req.query;
-    const paradaInicio = await getParadasDistancia(latini, longini);
-    const paradaDestino = await getParadasDistancia(latdest, longdest);
-    if (paradaInicio[0]['distance'] >= 1) {
-        res.status(400).json({ msg: "Se encuentra demasiado lejos de la parada más cercana" });
-        return;
+        const { latini, longini, latdest, longdest } = req.query;
+
+        const paradaInicio = await getParadasDistancia(latini, longini);
+        const paradaDestino = await getParadasDistancia(latdest, longdest);
+
+        if (paradaInicio[0]['distance'] >= 1) {
+            res.status(400).json({ msg: "Se encuentra demasiado lejos de la parada más cercana" });
+            return;
+        }
+
+        if (paradaDestino[0]['distance'] >= 1) {
+            res.status(400).json({ msg: "No se encontró una parada cerca del lugar indicado" });
+            return;
+        }
+
+        const grafoCacheado = await getOrBuildGraph();
+        const grafo = cloneGraph(grafoCacheado);
+
+        const inicio = `${paradaInicio[0]['id']}`;
+        const destino = `${paradaDestino[0]['id']}`;
+
+        const response = await ksp(grafo, inicio, destino, 2);
+        res.json(response);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-    if (paradaDestino[0]['distance'] >= 1) {
-        res.status(400).json({ msg: "No se encontró una parada cerca del lugar indicado" });
-        return;
-    }
-    const grafo = await generarGrafo();
-    const inicio = `${paradaInicio[0]['id']}`;
-    const destino = `${paradaDestino[0]['id']}`;
-    const response = await ksp(grafo, inicio, destino, 2);
-    res.json(response);
+}
+
+function cloneGraph(originalGraph) {
+    return miGrafo.json.read(miGrafo.json.write(originalGraph));
 }
 

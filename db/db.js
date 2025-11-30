@@ -2,21 +2,21 @@ const { openDb } = require('../index');
 
 const getAdjacencyList = async () => {
     const db = await openDb();
-    const sql = `  
-                SELECT recorridoParada.recorridoID, i.id as p_ini_id,  i.longitud as longitud_ini, i.latitud as latitud_ini,  i.paradaid as parada_ini, s.id as p_sig_id, s.paradaid as parada_sig, s.longitud as longitud_sig,s.latitud as latitud_sig, tiempo, disxpunto  
-                FROM recorridoParada
-                LEFT JOIN parada i on i.paradaID=recorridoParada.parada_ini
-                LEFT JOIN parada s on s.paradaID=recorridoParada.parada_sig
-                WHERE parada_ini IN (SELECT parada.paradaID FROM parada) 
-                GROUP BY parada_ini, parada_sig
-                HAVING COUNT(parada_ini)>=0
-                ORDER BY parada_ini asc
-                `;
-
+    const sql = `
+        SELECT recorridoParada.recorridoID, i.id as p_ini_id, i.longitud as longitud_ini,
+               i.latitud as latitud_ini, i.paradaid as parada_ini, s.id as p_sig_id,
+               s.paradaid as parada_sig, s.longitud as longitud_sig, s.latitud as latitud_sig,
+               tiempo, disxpunto  
+        FROM recorridoParada
+        LEFT JOIN parada i ON i.paradaID = recorridoParada.parada_ini
+        LEFT JOIN parada s ON s.paradaID = recorridoParada.parada_sig
+        WHERE parada_ini IS NOT NULL AND parada_sig IS NOT NULL
+        ORDER BY parada_ini ASC
+    `;
     const result = await db.all(sql);
     db.close();
     return result;
-}
+};
 
 const getProfundidad = async () => {
     const db = await openDb();
