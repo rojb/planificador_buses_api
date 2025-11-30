@@ -6,7 +6,7 @@ const { getOrBuildGraph } = require('../utils/graphCache');
 
 
 module.exports.generarGrafo = async () => {
-    let g = new miGrafo.Graph();
+    let g = new miGrafo.Graph({ multigraph: true });
     const adjacencyList = await getAdjacencyList();
 
     for (let i = 0; i < adjacencyList.length; i++) {
@@ -17,11 +17,6 @@ module.exports.generarGrafo = async () => {
             continue;
         }
 
-        // CLAVE: Usar ID único que incluya el tipo de recorrido
-        // Formato: "origen|destino|LINEA|TIPO"
-        // Esto previene que se mezclen ida y vuelta
-        const edgeId = `${edge.p_ini_id}|${edge.p_sig_id}|${edge.lineaCod}|${edge.tipo}`;
-
         // Crear peso del edge con toda la información
         const peso = {
             tiempo: edge.tiempo || 0,
@@ -31,17 +26,17 @@ module.exports.generarGrafo = async () => {
             recorridoID: edge.recorridoID
         };
 
-        // Agregar edge al grafo
-        // Solo permite esta combinación específica parada-parada-línea-dirección
+        // Agregar edge al grafo multigraph
+        // Ahora permite múltiples edges entre mismo par de nodos
         g.setEdge(
             edge.p_ini_id,
             edge.p_sig_id,
-            peso,
-            edgeId  // ID único del edge
+            peso
         );
     }
 
     return g;
+
 };
 
 
