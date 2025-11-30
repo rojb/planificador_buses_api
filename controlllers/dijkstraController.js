@@ -1,7 +1,7 @@
 const { getAdjacencyList, getParadasDistancia, getParadas, getParadasLineas } = require("../db/db")
 const miGrafo = require('graphlib');
 const { ksp } = require("../utils/ksp");
-const { getOrBuildGraph } = require('../utils/graphCache');
+/* const { getOrBuildGraph } = require('../utils/graphCache'); */
 
 
 
@@ -54,7 +54,8 @@ module.exports.index = async (req, res) => {
         }
 
         const grafoCacheado = await getOrBuildGraph();
-        const grafo = cloneGraph(grafoCacheado);
+        // const grafo = cloneGraph(grafoCacheado);
+        const grafo = await this.generarGrafo();
 
         const inicio = `${paradaInicio[0]['id']}`;
         const destino = `${paradaDestino[0]['id']}`;
