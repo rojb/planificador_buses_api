@@ -1,3 +1,4 @@
+const miGrafo = require('graphlib');
 const { getAdjacencyList } = require('../db/db');
 
 let cachedGraph = null;
