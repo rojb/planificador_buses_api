@@ -81,5 +81,43 @@ const getParadasLineas = async () => {
     return result
 }
 
+const getLineasPorCoordenadas = async (lat, long, distanciaMax = 1) => {
+    const db = await openDb();
+    const sql = `
+        SELECT DISTINCT 
+            linea.cod,
+            linea.nombre,
+            GROUP_CONCAT(DISTINCT recorrido.tipo) as tipos
+        FROM parada
+        LEFT JOIN recorridoParada ON recorridoParada.parada_ini = parada.paradaID 
+            OR recorridoParada.parada_sig = parada.paradaID
+        LEFT JOIN recorrido ON recorrido.recorridoID = recorridoParada.recorridoID
+        LEFT JOIN linea ON linea.cod = recorrido.lineaCod
+        WHERE (
+            (
+                (
+                    acos(
+                        sin(( ${lat} * pi() / 180))
+                        *
+                        sin(( parada.latitud * pi() / 180)) + cos(( ${lat} * pi() /180 ))
+                        *
+                        cos(( parada.latitud * pi() / 180)) * cos((( ${long} - parada.longitud) * pi()/180)))
+                ) * 180/pi()
+            ) * 60 * 1.1515 * 1.609344
+        ) <= ${distanciaMax}
+        AND linea.cod IS NOT NULL
+        GROUP BY linea.cod, linea.nombre
+        ORDER BY linea.cod ASC
+    `;
 
-module.exports = { getAdjacencyList, getProfundidad, getParadas, getParadasDistancia, getParadasLineas }
+    const result = await db.all(sql);
+    db.close();
+
+    return result.map(r => ({
+        cod: r.cod,
+        nombre: r.nombre,
+        tipos: r.tipos ? r.tipos.split(',') : []
+    }));
+};
+
+module.exports = { getAdjacencyList, getProfundidad, getParadas, getParadasDistancia, getParadasLineas, getLineasPorCoordenadas }
