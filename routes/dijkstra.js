@@ -3,6 +3,6 @@ const { index, getLineasByMultipleCoordsSimple } = require('../controlllers/dijk
 
 
 router.get('/dijkstra', index);
-router.get('/lineas-multiple', getLineasByMultipleCoordsSimple);
+router.post('/lineas-multiple', getLineasByMultipleCoordsSimple);
 
 module.exports = router;
