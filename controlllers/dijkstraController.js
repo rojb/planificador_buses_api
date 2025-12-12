@@ -46,8 +46,8 @@ module.exports.index = async (req, res) => {
             });
         }
 
-        const grafoCacheado = await getOrBuildGraph();
-        const grafo = cloneGraph(grafoCacheado);
+        const grafo = await getOrBuildGraph();
+        
 
         const inicio = `${paradaInicio[0]['id']}`;
         const destino = `${paradaDestino[0]['id']}`;
