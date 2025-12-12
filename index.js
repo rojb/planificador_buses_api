@@ -17,7 +17,7 @@ module.exports.openDb = async () => {
 
 
 const publicPath = path.resolve(__dirname, 'public');
-
+app.use(express.json());
 app.use(express.static(publicPath));
 
 

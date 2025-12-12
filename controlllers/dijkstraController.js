@@ -135,3 +135,57 @@ module.exports.index = async (req, res) => {
     }
 }
 
+module.exports.getLineasByMultipleCoordsSimple = async (req, res) => {
+    try {
+        const { lugares } = req.body;
+
+        if (!lugares || !Array.isArray(lugares) || lugares.length === 0) {
+            return res.status(400).json({
+                msg: "Debe enviar un array de lugares con lat y long"
+            });
+        }
+
+        const { getLineasPorCoordenadas } = require("../db/db");
+        const resultados = [];
+
+        for (let lugar of lugares) {
+            const { lat, long, nombre, distancia = 0.4 } = lugar;
+
+            if (!lat || !long) {
+                resultados.push({
+                    nombre: nombre || "Sin nombre",
+                    error: "Coordenadas inválidas"
+                });
+                continue;
+            }
+
+            try {
+                const lineas = await getLineasPorCoordenadas(lat, long, distancia);
+                if (lineas.length > 0) {
+                    resultados.push({
+                        nombre: nombre || "Sin nombre",
+                        lat,
+                        long,
+                        totalLineas: lineas.length,
+                        lineas: lineas
+                    });
+                }
+
+            } catch (error) {
+                resultados.push({
+                    nombre: nombre || "Sin nombre",
+                    error: error.message
+                });
+            }
+        }
+
+        res.json({
+            totalLugares: lugares.length,
+            procesados: resultados.length,
+            resultados: resultados
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
