@@ -1,56 +1,9 @@
-const { getAdjacencyList, getParadasDistancia, getParadas, getParadasLineas } = require("../db/db")
+const { getParadasDistancia, getLineasPorCoordenadas } = require("../db/db")
 const miGrafo = require('graphlib');
+const { getOrBuildGraph } = require("../utils/graphCache");
 const { ksp } = require("../utils/ksp");
 
 
-
-
-const generarGrafo = async () => {
-    let g = new miGrafo.Graph();
-    const adjacencyList = await getAdjacencyList();
-
-    console.log(`\n=== GENERANDO GRAFO ===`);
-    console.log(`Total de edges en BD: ${adjacencyList.length}`);
-
-    let edgesAgregados = 0;
-    let edgesFiltrados = 0;
-
-    for (let i = 0; i < adjacencyList.length; i++) {
-        const edge = adjacencyList[i];
-
-        // Validaciones básicas
-        if (!edge.p_ini_id || !edge.p_sig_id) {
-            edgesFiltrados++;
-            continue;
-        }
-
-        // Evitar auto-loops
-        if (edge.p_ini_id === edge.p_sig_id) {
-            edgesFiltrados++;
-            continue;
-        }
-
-        // Evitar la parada 1 si es destino (pero permitir que sea inicio)
-        // Comentado para permitir más conexiones:
-        // if (edge.p_sig_id === 1) {
-        //     edgesFiltrados++;
-        //     continue;
-        // }
-
-        // Usar tiempo como peso, si no hay usar distancia
-        const peso = edge.tiempo && edge.tiempo > 0 ? edge.tiempo : (edge.disxpunto || 1);
-
-        g.setEdge(edge.p_ini_id, edge.p_sig_id, peso);
-        edgesAgregados++;
-    }
-
-    console.log(`Edges agregados al grafo: ${edgesAgregados}`);
-    console.log(`Edges filtrados: ${edgesFiltrados}`);
-    console.log(`Total nodos en grafo: ${g.nodeCount()}`);
-    console.log(`Total edges en grafo: ${g.edgeCount()}`);
-
-    return g;
-}
 
 module.exports.index = async (req, res) => {
     try {
@@ -93,7 +46,9 @@ module.exports.index = async (req, res) => {
             });
         }
 
-        const grafo = await generarGrafo();
+        const grafoCacheado = await getOrBuildGraph();
+        const grafo = cloneGraph(grafoCacheado);
+
         const inicio = `${paradaInicio[0]['id']}`;
         const destino = `${paradaDestino[0]['id']}`;
 
@@ -145,7 +100,6 @@ module.exports.getLineasByMultipleCoordsSimple = async (req, res) => {
             });
         }
 
-        const { getLineasPorCoordenadas } = require("../db/db");
         const resultados = [];
 
         for (let lugar of lugares) {
@@ -187,5 +141,9 @@ module.exports.getLineasByMultipleCoordsSimple = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+}
+
+function cloneGraph(originalGraph) {
+    return miGrafo.json.read(miGrafo.json.write(originalGraph));
 }
 
