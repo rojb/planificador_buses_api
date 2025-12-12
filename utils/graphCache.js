@@ -3,7 +3,7 @@ const { getAdjacencyList } = require('../db/db');
 let cachedGraph = null;
 let lastUpdate = null;
 
-module.exports.generarGrafo = async () => {
+const generarGrafo = async () => {
     let g = new miGrafo.Graph();
     const adjacencyList = await getAdjacencyList();
 
